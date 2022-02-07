@@ -21,6 +21,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.mockito.Mockito.*;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -45,7 +47,7 @@ class AccountServiceTest {
         account = new Account();
         account.setAccountName("Emeka");
         account.setPassword("123");
-        account.setBalance(0.0);
+        account.setBalance(500.0);
 
     }
 
@@ -64,6 +66,13 @@ class AccountServiceTest {
         CreateAccountRequest request1 = new CreateAccountRequest("Emeka","123",600.00);
         TransactionResponse expectedResponse1 = accountService.createAccount(request1);
         assertTrue(expectedResponse1.isSuccess());
+        Optional <Account> account = accountRepository.findByAccountName(request.getAccountName());
+        assertNotNull(account.get().getAccountNumber());
+        assertEquals(account.get().getAccountName(), request.getAccountName());
+
+        System.out.println(account.get().getAccountNumber());
+
+
 
 
 
@@ -71,8 +80,9 @@ class AccountServiceTest {
 
     @Test
     void getAccountInfo() {
-        CreateAccountRequest request = new CreateAccountRequest(account.getAccountName(),account.getPassword(),400.0);
-        accountService.createAccount(request);
+        CreateAccountRequest request = new CreateAccountRequest(account.getAccountName(),account.getPassword(),account.getBalance());
+        var t =accountService.createAccount(request);
+        var e = accountRepository.findByAccountName(account.getAccountName());
        var expected = accountService.getAccountInfo(request.getAccountName());
         var result = new AccountInfoResponse(HttpStatus.BAD_REQUEST.value(),
                 false, "Account Number Not found",  new AccountResponse("", "", 0.0));
@@ -80,8 +90,39 @@ class AccountServiceTest {
         assertEquals(expected.getMessage(),result.getMessage());
         assertEquals(expected.getResponseCode(),result.getResponseCode());
         assertEquals(expected.getAccountResponse().getBalance(),result.getAccountResponse().getBalance());
+        assertNotNull(e.get().getAccountNumber());
 
-        System.out.println(account.getAccountNumber());
+
+//        System.out.println(account.getAccountName());
+//        System.out.println(account.getPassword());
+//        System.out.println(account.getBalance());
+//        System.out.println(account.getAccountNumber());
+//        System.out.println(t.getMessage());
+//
+//        System.out.println(e.get().getAccountNumber());
+    }
+
+    @Test
+    void viewAccountStatement(){
+        CreateAccountRequest request = new CreateAccountRequest(account.getAccountName(),
+                account.getPassword(),account.getBalance());
+        TransactionResponse expectedResponse = accountService.createAccount(request);
+        Optional<Account> account = accountRepository.findByAccountName(request.getAccountName());
+        String acctNumber = account.get().getAccountNumber();
+        System.out.println(account.get().getAccountNumber());
+        var output = accountService.viewAccountStatement(acctNumber);
+        assertEquals(output,account.get().getStatement());
+        assertTrue(expectedResponse.getMessage().contains(acctNumber));
+        System.out.println(output);
+        System.out.println(account.get().getStatement());
+        System.out.println(expectedResponse.getMessage());
+
+
+    }
+
+    @Test
+    void deposit(){
+
     }
 
 
