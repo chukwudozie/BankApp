@@ -84,19 +84,5 @@ class AccountServiceTest {
         System.out.println(account.getAccountNumber());
     }
 
-    @Test
-    void viewAccountStatement() {
-    }
 
-    @Test
-    void deposit() {
-    }
-
-    @Test
-    void withdraw() {
-    }
-
-    @Test
-    void loginAccount() {
-    }
 }
