@@ -1,7 +1,10 @@
 package com.nitex.simplebankapp.service;
 
 import com.nitex.simplebankapp.model.Account;
+import com.nitex.simplebankapp.payload.request.AccountLoginRequest;
 import com.nitex.simplebankapp.payload.request.CreateAccountRequest;
+import com.nitex.simplebankapp.payload.request.DepositRequest;
+import com.nitex.simplebankapp.payload.request.WithdrawalRequest;
 import com.nitex.simplebankapp.payload.response.AccountInfoResponse;
 import com.nitex.simplebankapp.payload.response.AccountResponse;
 import com.nitex.simplebankapp.payload.response.TransactionResponse;
@@ -14,8 +17,15 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.neo4j.Neo4jProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,18 +40,25 @@ class AccountServiceTest {
 
     PasswordEncoder encoder = new BCryptPasswordEncoder();
 
-    AuthenticationManager authenticationManager;
-
     UserDetailsService userDetailsService;
 
-    JwtUtils utils;
+    Account account;
+    JwtUtils utils = new JwtUtils("chompfoodSecretKeychangedbyme",86400000);
+
+    AuthenticationManager authenticationManager = new AuthenticationManager() {
+        @Override
+        public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+            return new UsernamePasswordAuthenticationToken("","");
+        }
+    };
 
     AccountRepository accountRepository = new AccountRepository();
+
 
     @InjectMocks
     AccountService accountService = new AccountService(encoder,authenticationManager,
             userDetailsService,utils,accountRepository);
-    Account account;
+
     @BeforeEach
     void setUp() {
         account = new Account();
@@ -92,14 +109,6 @@ class AccountServiceTest {
         assertEquals(expected.getAccountResponse().getBalance(),result.getAccountResponse().getBalance());
         assertNotNull(e.get().getAccountNumber());
 
-
-//        System.out.println(account.getAccountName());
-//        System.out.println(account.getPassword());
-//        System.out.println(account.getBalance());
-//        System.out.println(account.getAccountNumber());
-//        System.out.println(t.getMessage());
-//
-//        System.out.println(e.get().getAccountNumber());
     }
 
     @Test
@@ -113,9 +122,6 @@ class AccountServiceTest {
         var output = accountService.viewAccountStatement(acctNumber);
         assertEquals(output,account.get().getStatement());
         assertTrue(expectedResponse.getMessage().contains(acctNumber));
-        System.out.println(output);
-        System.out.println(account.get().getStatement());
-        System.out.println(expectedResponse.getMessage());
 
 
     }
@@ -123,7 +129,18 @@ class AccountServiceTest {
     @Test
     void deposit(){
 
+        CreateAccountRequest request = new CreateAccountRequest(account.getAccountName(),
+                account.getPassword(),account.getBalance());
+       accountService.createAccount(request);
+        Optional<Account> account1 = accountRepository.findByAccountName(request.getAccountName());
+        String acctNumber = account1.get().getAccountNumber();
+        Double depositAmount = 700.00;
+        DepositRequest depositRequest = new DepositRequest(acctNumber,depositAmount);
+        accountService.deposit(depositRequest);
+        assertEquals(account1.get().getBalance(),depositAmount + account.getBalance());
+
     }
+
 
 
 }
