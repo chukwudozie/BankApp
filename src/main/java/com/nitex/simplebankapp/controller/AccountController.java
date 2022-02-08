@@ -11,12 +11,12 @@ import com.nitex.simplebankapp.payload.response.AccountLoginResponse;
 import com.nitex.simplebankapp.payload.response.AccountStatementResponse;
 import com.nitex.simplebankapp.payload.response.TransactionResponse;
 import com.nitex.simplebankapp.service.AccountService;
+import com.nitex.simplebankapp.service.AccountServiceImpl;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.List;
 
 @RestController
@@ -25,8 +25,8 @@ import java.util.List;
 public class AccountController {
     private final AccountService accountService;
 
-    public AccountController(AccountService accountService) {
-        this.accountService = accountService;
+    public AccountController(AccountServiceImpl accountServiceImpl) {
+        this.accountService = accountServiceImpl;
     }
 
     @PostMapping("/create_account")
